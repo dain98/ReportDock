@@ -9,6 +9,34 @@ reportdock publish ./report.html --base-url https://reportdock.example.com --tok
 
 The client discovers referenced local assets from the HTML, uploads a multipart report bundle, and prints the immutable hosted URL.
 
+## MCP
+
+Run ReportDock as a local stdio MCP server:
+
+```sh
+reportdock mcp
+```
+
+Claude Code:
+
+```sh
+claude mcp add --scope user reportdock \
+  --env REPORTDOCK_BASE_URL=https://reportdock.example.com \
+  --env REPORTDOCK_TOKEN=your-token \
+  -- npx -y reportdock@latest mcp
+```
+
+Codex:
+
+```sh
+codex mcp add reportdock \
+  --env REPORTDOCK_BASE_URL=https://reportdock.example.com \
+  --env REPORTDOCK_TOKEN=your-token \
+  -- npx -y reportdock@latest mcp
+```
+
+The MCP server exposes `publish_report`, which accepts `entryFile`, optional `title`, optional `metadata`, and optional `assetRoot`.
+
 ```ts
 import { publishReport } from "reportdock";
 

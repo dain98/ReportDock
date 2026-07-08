@@ -1,6 +1,7 @@
 import { spawn } from "node:child_process";
 import { Command } from "commander";
 import { publishReport } from "./index.js";
+import { runMcpServer } from "./mcp.js";
 
 interface PublishCommandOptions {
   baseUrl?: string;
@@ -17,7 +18,7 @@ const program = new Command();
 program
   .name("reportdock")
   .description("Publish one-page HTML reports to a self-hosted ReportDock server.")
-  .version("0.1.3");
+  .version("0.1.4");
 
 program
   .command("publish")
@@ -52,6 +53,19 @@ program
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
       process.stderr.write(`reportdock: ${message}\n`);
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command("mcp")
+  .description("Run the ReportDock MCP server over stdio.")
+  .action(async () => {
+    try {
+      await runMcpServer();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      process.stderr.write(`reportdock mcp: ${message}\n`);
       process.exitCode = 1;
     }
   });

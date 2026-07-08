@@ -9,7 +9,7 @@ Create a `docker-compose.yml` file:
 ```yaml
 services:
   reportdock:
-    image: ghcr.io/dain98/reportdock:v0.1.3
+    image: ghcr.io/dain98/reportdock:v0.1.4
     ports:
       - "3000:3000"
     environment:
@@ -58,7 +58,7 @@ X.Y          Major/minor alias for release tags
 sha-<short>  Published for every workflow run
 ```
 
-The GitHub Actions workflow builds and pushes multi-architecture images for `linux/amd64` and `linux/arm64`. To publish a release image, push a tag such as `v0.1.3`.
+The GitHub Actions workflow builds and pushes multi-architecture images for `linux/amd64` and `linux/arm64`. To publish a release image, push a tag such as `v0.1.4`.
 
 Important environment variables:
 
@@ -108,6 +108,55 @@ Useful options:
 --open
 ```
 
+## MCP Server
+
+The `reportdock` package also includes a local stdio MCP server for agents. It exposes a `publish_report` tool that uploads a local HTML report through the same ReportDock API as the CLI.
+
+Claude Code:
+
+```sh
+claude mcp add --scope user reportdock \
+  --env REPORTDOCK_BASE_URL=https://reportdock.example.com \
+  --env REPORTDOCK_TOKEN=your-token \
+  -- npx -y reportdock@latest mcp
+```
+
+Codex:
+
+```sh
+codex mcp add reportdock \
+  --env REPORTDOCK_BASE_URL=https://reportdock.example.com \
+  --env REPORTDOCK_TOKEN=your-token \
+  -- npx -y reportdock@latest mcp
+```
+
+Codex `~/.codex/config.toml`:
+
+```toml
+[mcp_servers.reportdock]
+command = "npx"
+args = ["-y", "reportdock@latest", "mcp"]
+env_vars = ["REPORTDOCK_BASE_URL", "REPORTDOCK_TOKEN"]
+```
+
+For committed Claude Code project config, keep secrets in environment variables:
+
+```json
+{
+  "mcpServers": {
+    "reportdock": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "reportdock@latest", "mcp"],
+      "env": {
+        "REPORTDOCK_BASE_URL": "${REPORTDOCK_BASE_URL}",
+        "REPORTDOCK_TOKEN": "${REPORTDOCK_TOKEN}"
+      }
+    }
+  }
+}
+```
+
 JS API:
 
 ```ts
@@ -133,7 +182,7 @@ reportdock
 
 Release publishing is handled by `.github/workflows/npm.yml` when a `v*` tag is pushed. Before the first publish, create an npm automation token, or a granular npm access token with 2FA bypass enabled, and add it to the GitHub repository as `NPM_TOKEN`.
 
-The workflow checks that the Git tag matches `packages/client/package.json`. For example, package version `0.1.3` must be released with tag `v0.1.3`.
+The workflow checks that the Git tag matches `packages/client/package.json`. For example, package version `0.1.4` must be released with tag `v0.1.4`.
 
 ## Upload Model
 
