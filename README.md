@@ -1,4 +1,4 @@
-# ReportDock
+![ReportDock](docs/assets/reportdock-banner.png)
 
 ReportDock is a self-hosted service for publishing one-page HTML reports from agents, tests, and CI jobs. A client uploads an HTML entry file plus referenced local assets, and the server returns an immutable public-unlisted URL.
 
