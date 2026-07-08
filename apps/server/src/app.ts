@@ -369,6 +369,8 @@ function renderLoginPage(error?: string): string {
 }
 
 function renderAdminPage(reports: ReportRecord[], config: ReportDockConfig): string {
+  const claudeCommand = buildMcpSetupCommand("claude", config);
+  const codexCommand = buildMcpSetupCommand("codex", config);
   const rows = reports
     .map((report) => {
       const url = buildReportUrl(report.id, config);
@@ -396,7 +398,23 @@ function renderAdminPage(reports: ReportRecord[], config: ReportDockConfig): str
       <main>
         <header>
           <h1>ReportDock</h1>
-          <form method="post" action="/admin/logout"><button type="submit">Log out</button></form>
+          <div class="header-actions">
+            <details class="agent-setup">
+              <summary>Add to Agent</summary>
+              <div class="agent-panel">
+                <h2>Add to Agent</h2>
+                <label>
+                  Claude Code
+                  <textarea readonly rows="4">${escapeHtml(claudeCommand)}</textarea>
+                </label>
+                <label>
+                  Codex
+                  <textarea readonly rows="4">${escapeHtml(codexCommand)}</textarea>
+                </label>
+              </div>
+            </details>
+            <form method="post" action="/admin/logout"><button type="submit">Log out</button></form>
+          </div>
         </header>
         <table>
           <thead>
@@ -419,6 +437,19 @@ function renderAdminPage(reports: ReportRecord[], config: ReportDockConfig): str
   );
 }
 
+function buildMcpSetupCommand(agent: "claude" | "codex", config: ReportDockConfig): string {
+  const command =
+    agent === "claude" ? "claude mcp add --scope user reportdock" : "codex mcp add reportdock";
+  return `${command} \\
+  --env REPORTDOCK_BASE_URL=${shellQuote(config.baseUrl)} \\
+  --env REPORTDOCK_TOKEN=${shellQuote(config.adminToken)} \\
+  -- npx -y reportdock@latest mcp`;
+}
+
+function shellQuote(value: string): string {
+  return `'${value.replaceAll("'", "'\"'\"'")}'`;
+}
+
 function htmlDocument(title: string, body: string): string {
   return `<!doctype html>
 <html lang="en">
@@ -431,14 +462,22 @@ function htmlDocument(title: string, body: string): string {
     body { margin: 0; background: #f6f8fa; color: #182230; }
     main { width: min(1120px, calc(100% - 32px)); margin: 32px auto; }
     header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+    .header-actions { display: flex; align-items: center; gap: 8px; }
     h1 { margin: 0; font-size: 24px; line-height: 1.2; }
     table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #d9e2ec; }
     th, td { padding: 10px 12px; border-bottom: 1px solid #e6edf3; text-align: left; vertical-align: middle; }
     th { font-size: 12px; text-transform: uppercase; color: #52606d; background: #f8fafc; }
     input { width: min(360px, 100%); padding: 7px 8px; border: 1px solid #bcccdc; border-radius: 4px; font: inherit; }
     button { padding: 7px 10px; border: 1px solid #9fb3c8; border-radius: 4px; background: #fff; color: #182230; font: inherit; cursor: pointer; }
+    summary { display: inline-flex; align-items: center; padding: 7px 10px; border: 1px solid #9fb3c8; border-radius: 4px; background: #fff; color: #182230; font: inherit; cursor: pointer; list-style: none; }
+    summary::-webkit-details-marker { display: none; }
     a { color: #0b5cad; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+    textarea { box-sizing: border-box; width: 100%; resize: vertical; padding: 8px; border: 1px solid #bcccdc; border-radius: 4px; font: 12px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; white-space: pre; }
+    .agent-setup { position: relative; }
+    .agent-panel { position: absolute; right: 0; top: calc(100% + 8px); z-index: 10; display: grid; gap: 12px; width: min(680px, calc(100vw - 32px)); padding: 16px; background: white; border: 1px solid #d9e2ec; box-shadow: 0 16px 40px rgba(15, 23, 42, 0.16); }
+    .agent-panel h2 { margin: 0; font-size: 16px; line-height: 1.25; }
+    .agent-panel label { display: grid; gap: 6px; color: #364152; font-size: 13px; }
     .login { max-width: 392px; }
     .login-panel { display: grid; gap: 18px; padding: 20px; background: white; border: 1px solid #d9e2ec; }
     .login form { display: grid; gap: 12px; }
@@ -447,11 +486,16 @@ function htmlDocument(title: string, body: string): string {
     .empty { color: #52606d; text-align: center; padding: 28px; }
     @media (prefers-color-scheme: dark) {
       body { background: #0b1018; color: #eef4ff; }
-      table, .login-panel { background: #121a26; border-color: #263448; }
+      table, .login-panel, .agent-panel { background: #121a26; border-color: #263448; }
       th, td { border-color: #263448; }
       th { color: #a7b3c5; background: #162131; }
-      input, button { background: #0b1018; color: #eef4ff; border-color: #364a63; }
+      input, button, summary, textarea { background: #0b1018; color: #eef4ff; border-color: #364a63; }
+      .agent-panel label { color: #cbd5e1; }
       a { color: #8ab4ff; }
+    }
+    @media (max-width: 680px) {
+      header { align-items: flex-start; flex-direction: column; }
+      .agent-panel { position: fixed; left: 16px; right: 16px; top: 72px; width: auto; max-height: calc(100vh - 96px); overflow: auto; }
     }
   </style>
 </head>

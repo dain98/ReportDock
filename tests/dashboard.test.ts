@@ -42,6 +42,33 @@ describe("admin dashboard authentication", () => {
     expect(panelEnd).toBeGreaterThan(formIndex);
   });
 
+  it("renders copyable MCP setup commands for Claude Code and Codex after login", async () => {
+    server = await startTestServer();
+    const loginResponse = await fetch(new URL("/admin/login", server.baseUrl), {
+      method: "POST",
+      redirect: "manual",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ token: TEST_TOKEN })
+    });
+    const cookie = loginResponse.headers.get("set-cookie")?.split(";")[0];
+
+    expect(loginResponse.status).toBe(303);
+    expect(cookie).toBeTruthy();
+
+    const response = await fetch(new URL("/admin", server.baseUrl), {
+      headers: { cookie: cookie ?? "" }
+    });
+    const body = await response.text();
+    const renderedBody = decodeHtml(body);
+
+    expect(response.status).toBe(200);
+    expect(body).toContain("Add to Agent");
+    expect(renderedBody).toContain("claude mcp add --scope user reportdock");
+    expect(renderedBody).toContain("codex mcp add reportdock");
+    expect(renderedBody).toContain(`REPORTDOCK_BASE_URL='${server.baseUrl}'`);
+    expect(renderedBody).toContain(`REPORTDOCK_TOKEN='${TEST_TOKEN}'`);
+  });
+
   it("does not reveal the expected token on failed login", async () => {
     server = await startTestServer();
     const response = await fetch(new URL("/admin/login", server.baseUrl), {
@@ -120,3 +147,12 @@ describe("admin dashboard authentication", () => {
     expect(cookie).not.toMatch(/;\s*Secure(?:;|$)/);
   });
 });
+
+function decodeHtml(value: string): string {
+  return value
+    .replaceAll("&quot;", '"')
+    .replaceAll("&#39;", "'")
+    .replaceAll("&gt;", ">")
+    .replaceAll("&lt;", "<")
+    .replaceAll("&amp;", "&");
+}
