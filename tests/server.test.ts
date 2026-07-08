@@ -1,7 +1,7 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
-import { TEST_TOKEN, makeReportForm, postReport, startTestServer, type TestServer } from "./helpers.js";
+import { TEST_TOKEN, makeReportForm, postReport, putReport, startTestServer, type TestServer } from "./helpers.js";
 
 let server: TestServer | undefined;
 
@@ -117,6 +117,81 @@ describe("server API and public report behavior", () => {
     const body = (await publish.json()) as { id: string; url: string };
 
     expect(body.url).toBe(`https://reports.example.com/r/${body.id}/`);
+  });
+
+  it("updates an existing report while keeping its public URL stable", async () => {
+    server = await startTestServer();
+    const publish = await postReport(
+      server.baseUrl,
+      TEST_TOKEN,
+      await makeReportForm(`<title>First</title><h1>First version</h1><img src="old.txt">`, [
+        { path: "old.txt", field: "asset_0", bytes: "old asset" }
+      ])
+    );
+    const created = (await publish.json()) as { id: string; url: string; version: number; createdAt: string; updatedAt: string };
+
+    const update = await putReport(
+      server.baseUrl,
+      created.id,
+      TEST_TOKEN,
+      await makeReportForm(`<title>Second</title><h1>Second version</h1><img src="new.txt">`, [
+        { path: "new.txt", field: "asset_0", bytes: "new asset" }
+      ])
+    );
+
+    expect(update.status).toBe(200);
+    const updated = (await update.json()) as {
+      id: string;
+      url: string;
+      title: string;
+      version: number;
+      createdAt: string;
+      updatedAt: string;
+      assetCount: number;
+    };
+    expect(updated).toMatchObject({
+      id: created.id,
+      url: created.url,
+      title: "Test Report",
+      version: 2,
+      createdAt: created.createdAt,
+      assetCount: 1
+    });
+    expect(Date.parse(updated.updatedAt)).toBeGreaterThanOrEqual(Date.parse(created.updatedAt));
+
+    const html = await fetch(created.url);
+    expect(html.status).toBe(200);
+    const htmlText = await html.text();
+    expect(htmlText).toContain("Second version");
+    expect(htmlText).not.toContain("First version");
+
+    const newAsset = await fetch(`${created.url}new.txt`);
+    expect(newAsset.status).toBe(200);
+    expect(await newAsset.text()).toBe("new asset");
+
+    const oldAsset = await fetch(`${created.url}old.txt`);
+    expect(oldAsset.status).toBe(404);
+  });
+
+  it("rejects updates for missing or deleted reports", async () => {
+    server = await startTestServer();
+    const missing = await putReport(
+      server.baseUrl,
+      "ABCDEFGHIJKLMNOPQRSTUV",
+      TEST_TOKEN,
+      await makeReportForm("<h1>Missing</h1>")
+    );
+    expect(missing.status).toBe(404);
+
+    const publish = await postReport(server.baseUrl, TEST_TOKEN, await makeReportForm("<h1>Delete me</h1>"));
+    const body = (await publish.json()) as { id: string };
+    await fetch(new URL(`/api/reports/${body.id}`, server.baseUrl), {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${TEST_TOKEN}` }
+    });
+
+    const deleted = await putReport(server.baseUrl, body.id, TEST_TOKEN, await makeReportForm("<h1>Deleted</h1>"));
+    expect(deleted.status).toBe(404);
   });
 });
 

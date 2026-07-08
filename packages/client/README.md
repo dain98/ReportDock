@@ -5,9 +5,10 @@ CLI and JS client for publishing one-page HTML reports to a self-hosted ReportDo
 ```sh
 npm install -g reportdock
 reportdock publish ./report.html --base-url https://reportdock.example.com --token "$REPORTDOCK_TOKEN"
+reportdock update <report-id> ./updated-report.html --base-url https://reportdock.example.com --token "$REPORTDOCK_TOKEN"
 ```
 
-The client discovers referenced local assets from the HTML, uploads a multipart report bundle, and prints the immutable hosted URL.
+The client discovers referenced local assets from the HTML, uploads a multipart report bundle, and prints the stable hosted URL.
 
 ## MCP
 
@@ -35,10 +36,15 @@ codex mcp add reportdock \
   -- npx -y reportdock@latest mcp
 ```
 
-The MCP server exposes `publish_report`, which accepts `entryFile`, optional `title`, optional `metadata`, and optional `assetRoot`.
+The MCP server exposes:
+
+```txt
+publish_report(entryFile, title?, metadata?, assetRoot?)
+update_report(id, entryFile, title?, metadata?, assetRoot?)
+```
 
 ```ts
-import { publishReport } from "reportdock";
+import { publishReport, updateReport } from "reportdock";
 
 const result = await publishReport({
   entryFile: "./report.html",
@@ -47,4 +53,11 @@ const result = await publishReport({
 });
 
 console.log(result.url);
+
+await updateReport({
+  id: result.id,
+  entryFile: "./updated-report.html",
+  baseUrl: process.env.REPORTDOCK_BASE_URL,
+  token: process.env.REPORTDOCK_TOKEN
+});
 ```

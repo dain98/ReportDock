@@ -9,6 +9,7 @@ import type { ReportDockConfig } from "./config.js";
 import type { ReportDatabase, ReportRecord } from "./db.js";
 import { generateNonce, generateReportId } from "./ids.js";
 import { normalizeReportPath, safeResolve, validateReportId } from "./path-validation.js";
+import { reportLegacyDirectory, reportVersionDirectory } from "./storage.js";
 
 export class UploadError extends Error {
   constructor(
@@ -73,6 +74,7 @@ export async function processReportUpload(
       id,
       title: manifest.title,
       createdAt,
+      updatedAt: createdAt,
       sizeBytes: prepared.sizeBytes,
       assetCount: manifest.assets.length,
       metadata: manifest.metadata ?? {},
@@ -80,7 +82,7 @@ export async function processReportUpload(
     });
     insertedMetadata = true;
 
-    const finalDir = path.join(config.reportsDir, id);
+    const finalDir = reportLegacyDirectory(config, id);
     await mkdir(config.reportsDir, { recursive: true });
     await rename(stagingDir, finalDir);
 
@@ -89,6 +91,8 @@ export async function processReportUpload(
         id,
         title: manifest.title,
         createdAt,
+        updatedAt: createdAt,
+        version: 1,
         sizeBytes: prepared.sizeBytes,
         assetCount: manifest.assets.length,
         metadata: manifest.metadata ?? {},
@@ -101,6 +105,64 @@ export async function processReportUpload(
       db.markDeleted(id, new Date().toISOString());
     }
     await rm(stagingDir, { recursive: true, force: true });
+    throw error;
+  }
+}
+
+export async function processReportUpdate(
+  request: FastifyRequest,
+  id: string,
+  config: ReportDockConfig,
+  db: ReportDatabase
+): Promise<UploadedReport> {
+  const existing = db.getActiveReport(id);
+  if (!existing) {
+    throw new UploadError(404, "Report not found.");
+  }
+
+  const nextVersion = existing.version + 1;
+  const stagingDir = path.join(config.tmpDir, `upload-${id}-${generateNonce()}`);
+  const uploadDir = path.join(stagingDir, ".uploads");
+  const finalDir = reportVersionDirectory(config, id, nextVersion);
+  let promoted = false;
+
+  await mkdir(uploadDir, { recursive: true });
+
+  try {
+    const parsed = await parseMultipartUpload(request, uploadDir, config);
+    const manifest = parseManifest(parsed.manifestRaw, config);
+    const prepared = await prepareStagingDirectory(stagingDir, parsed.files, manifest, config);
+    const updatedAt = new Date().toISOString();
+
+    await mkdir(path.dirname(finalDir), { recursive: true });
+    await rm(finalDir, { recursive: true, force: true });
+    await rename(stagingDir, finalDir);
+    promoted = true;
+
+    const report = db.updateReport({
+      id,
+      title: manifest.title,
+      updatedAt,
+      version: nextVersion,
+      sizeBytes: prepared.sizeBytes,
+      assetCount: manifest.assets.length,
+      metadata: manifest.metadata ?? {},
+      entryPath: "index.html"
+    });
+
+    if (!report) {
+      throw new UploadError(404, "Report not found.");
+    }
+
+    return {
+      report,
+      directory: finalDir
+    };
+  } catch (error) {
+    await rm(stagingDir, { recursive: true, force: true });
+    if (promoted) {
+      await rm(finalDir, { recursive: true, force: true });
+    }
     throw error;
   }
 }

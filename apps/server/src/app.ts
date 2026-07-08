@@ -1,6 +1,5 @@
 import { createReadStream } from "node:fs";
 import { mkdir, rm, stat } from "node:fs/promises";
-import path from "node:path";
 import cookie from "@fastify/cookie";
 import formBody from "@fastify/formbody";
 import multipart from "@fastify/multipart";
@@ -19,7 +18,8 @@ import {
   setNoStore,
   setReportSecurityHeaders
 } from "./security.js";
-import { processReportUpload, UploadError } from "./upload.js";
+import { reportContentDirectory, reportLegacyDirectory, reportVersionsDirectory } from "./storage.js";
+import { processReportUpdate, processReportUpload, UploadError } from "./upload.js";
 
 interface AppOptions extends ConfigOverrides {
   logger?: boolean;
@@ -100,6 +100,21 @@ function registerApiRoutes(app: FastifyInstance, config: ReportDockConfig, db: R
     const response = publicReportResponse(uploaded.report, config);
     reply.code(201).send(response);
     return reply;
+  });
+
+  app.put("/api/reports/:id", async (request, reply) => {
+    setNoStore(reply);
+    if (!requireBearerAuth(request, reply, config)) {
+      return reply;
+    }
+
+    const id = getValidatedId(request, reply);
+    if (!id) {
+      return reply;
+    }
+
+    const uploaded = await processReportUpdate(request, id, config, db);
+    return detailedReportResponse(uploaded.report, config);
   });
 
   app.get("/api/reports", async (request, reply) => {
@@ -254,7 +269,7 @@ async function sendReportFile(
     return reply;
   }
 
-  const root = path.join(config.reportsDir, id);
+  const root = reportContentDirectory(config, report);
   const filePath = safeResolve(root, reportPath);
   const info = await stat(filePath).catch(() => undefined);
   if (!info?.isFile()) {
@@ -277,7 +292,10 @@ async function sendReportFile(
 
 async function deleteReport(id: string, config: ReportDockConfig, db: ReportDatabase): Promise<void> {
   db.markDeleted(id, new Date().toISOString());
-  await rm(path.join(config.reportsDir, id), { recursive: true, force: true });
+  await Promise.all([
+    rm(reportLegacyDirectory(config, id), { recursive: true, force: true }),
+    rm(reportVersionsDirectory(config, id), { recursive: true, force: true })
+  ]);
 }
 
 function getValidatedId(
@@ -300,12 +318,16 @@ function publicReportResponse(report: ReportRecord, config: ReportDockConfig): {
   url: string;
   title?: string;
   createdAt: string;
+  updatedAt: string;
+  version: number;
 } {
   return {
     id: report.id,
     url: buildReportUrl(report.id, config),
     title: report.title,
-    createdAt: report.createdAt
+    createdAt: report.createdAt,
+    updatedAt: report.updatedAt,
+    version: report.version
   };
 }
 

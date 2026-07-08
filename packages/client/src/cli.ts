@@ -1,6 +1,6 @@
 import { spawn } from "node:child_process";
 import { Command } from "commander";
-import { publishReport } from "./index.js";
+import { publishReport, updateReport } from "./index.js";
 import { runMcpServer } from "./mcp.js";
 
 interface PublishCommandOptions {
@@ -18,7 +18,7 @@ const program = new Command();
 program
   .name("reportdock")
   .description("Publish one-page HTML reports to a self-hosted ReportDock server.")
-  .version("0.1.4");
+  .version("0.1.5");
 
 program
   .command("publish")
@@ -45,6 +45,45 @@ program
         process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
       } else {
         process.stdout.write(`Published: ${result.url}\n`);
+      }
+
+      if (options.open) {
+        openUrl(result.url);
+      }
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      process.stderr.write(`reportdock: ${message}\n`);
+      process.exitCode = 1;
+    }
+  });
+
+program
+  .command("update")
+  .argument("<id>", "Report ID to update")
+  .argument("<entry-html>", "HTML entry file to publish as the latest report version")
+  .option("--base-url <url>", "ReportDock server URL")
+  .option("--token <token>", "ReportDock API token")
+  .option("--title <title>", "Report title")
+  .option("--metadata <key=value>", "Metadata entry", collectMetadata, [])
+  .option("--asset-root <dir>", "Root directory for relative assets")
+  .option("--json", "Print machine-readable JSON")
+  .option("--open", "Open the updated report in the default browser")
+  .action(async (id: string, entryFile: string, options: PublishCommandOptions) => {
+    try {
+      const result = await updateReport({
+        id,
+        entryFile,
+        baseUrl: options.baseUrl,
+        token: options.token,
+        title: options.title,
+        metadata: parseMetadata(options.metadata ?? []),
+        assetRoot: options.assetRoot
+      });
+
+      if (options.json) {
+        process.stdout.write(`${JSON.stringify(result, null, 2)}\n`);
+      } else {
+        process.stdout.write(`Updated: ${result.url}\n`);
       }
 
       if (options.open) {

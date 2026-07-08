@@ -27,6 +27,10 @@ describe("ReportDock MCP server", () => {
         expect.objectContaining({
           name: "publish_report",
           description: expect.stringContaining("Publish")
+        }),
+        expect.objectContaining({
+          name: "update_report",
+          description: expect.stringContaining("Update")
         })
       ])
     );
@@ -64,6 +68,44 @@ describe("ReportDock MCP server", () => {
     const text = content[0]?.type === "text" ? (content[0].text ?? "") : "";
     expect(text).toContain("Published report:");
     expect(text).toContain((result.structuredContent as { url: string }).url);
+  });
+
+  it("updates a local HTML report through update_report", async () => {
+    reportdockServer = await startTestServer();
+    const root = await makeTempDir();
+    await writeFile(path.join(root, "first.html"), "<!doctype html><title>First MCP</title><h1>First MCP</h1>");
+    await writeFile(path.join(root, "second.html"), "<!doctype html><title>Second MCP</title><h1>Second MCP</h1>");
+
+    mcpClient = await startMcpClient({
+      REPORTDOCK_BASE_URL: reportdockServer.baseUrl,
+      REPORTDOCK_TOKEN: TEST_TOKEN
+    });
+
+    const published = await mcpClient.callTool({
+      name: "publish_report",
+      arguments: {
+        entryFile: path.join(root, "first.html")
+      }
+    });
+    const publishedContent = published.structuredContent as { id: string; url: string };
+
+    const updated = await mcpClient.callTool({
+      name: "update_report",
+      arguments: {
+        id: publishedContent.id,
+        entryFile: path.join(root, "second.html")
+      }
+    });
+
+    expect(updated.isError).not.toBe(true);
+    expect(updated.structuredContent).toMatchObject({
+      id: publishedContent.id,
+      url: publishedContent.url,
+      version: 2
+    });
+
+    const html = await fetch(publishedContent.url);
+    expect(await html.text()).toContain("Second MCP");
   });
 });
 

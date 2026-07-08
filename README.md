@@ -1,6 +1,6 @@
 ![ReportDock](docs/assets/reportdock-banner.png)
 
-ReportDock is a self-hosted service for publishing one-page HTML reports from agents, tests, and CI jobs. A client uploads an HTML entry file plus referenced local assets, and the server returns an immutable public-unlisted URL.
+ReportDock is a self-hosted service for publishing one-page HTML reports from agents, tests, and CI jobs. A client uploads an HTML entry file plus referenced local assets, and the server returns a stable public-unlisted URL that can be updated in place.
 
 ## Quick Start
 
@@ -9,7 +9,7 @@ Create a `docker-compose.yml` file:
 ```yaml
 services:
   reportdock:
-    image: ghcr.io/dain98/reportdock:v0.1.4
+    image: ghcr.io/dain98/reportdock:v0.1.5
     ports:
       - "3000:3000"
     environment:
@@ -58,7 +58,7 @@ X.Y          Major/minor alias for release tags
 sha-<short>  Published for every workflow run
 ```
 
-The GitHub Actions workflow builds and pushes multi-architecture images for `linux/amd64` and `linux/arm64`. To publish a release image, push a tag such as `v0.1.4`.
+The GitHub Actions workflow builds and pushes multi-architecture images for `linux/amd64` and `linux/arm64`. To publish a release image, push a tag such as `v0.1.5`.
 
 Important environment variables:
 
@@ -89,6 +89,10 @@ npm install -g reportdock
 reportdock publish ./report.html \
   --base-url https://reportdock.example.com \
   --token "$REPORTDOCK_TOKEN"
+
+reportdock update <report-id> ./updated-report.html \
+  --base-url https://reportdock.example.com \
+  --token "$REPORTDOCK_TOKEN"
 ```
 
 Flags override environment variables:
@@ -110,7 +114,7 @@ Useful options:
 
 ## MCP Server
 
-The `reportdock` package also includes a local stdio MCP server for agents. It exposes a `publish_report` tool that uploads a local HTML report through the same ReportDock API as the CLI.
+The `reportdock` package also includes a local stdio MCP server for agents. It exposes `publish_report` and `update_report` tools that upload local HTML reports through the same ReportDock API as the CLI.
 
 Claude Code:
 
@@ -160,7 +164,7 @@ For committed Claude Code project config, keep secrets in environment variables:
 JS API:
 
 ```ts
-import { publishReport } from "reportdock";
+import { publishReport, updateReport } from "reportdock";
 
 const report = await publishReport({
   entryFile: "./report.html",
@@ -170,6 +174,13 @@ const report = await publishReport({
 });
 
 console.log(report.url);
+
+await updateReport({
+  id: report.id,
+  entryFile: "./updated-report.html",
+  baseUrl: process.env.REPORTDOCK_BASE_URL,
+  token: process.env.REPORTDOCK_TOKEN
+});
 ```
 
 ## npm Package
@@ -182,19 +193,22 @@ reportdock
 
 Release publishing is handled by `.github/workflows/npm.yml` when a `v*` tag is pushed. Before the first publish, create an npm automation token, or a granular npm access token with 2FA bypass enabled, and add it to the GitHub repository as `NPM_TOKEN`.
 
-The workflow checks that the Git tag matches `packages/client/package.json`. For example, package version `0.1.4` must be released with tag `v0.1.4`.
+The workflow checks that the Git tag matches `packages/client/package.json`. For example, package version `0.1.5` must be released with tag `v0.1.5`.
 
 ## Upload Model
 
-Every publish creates a high-entropy immutable report ID and stores:
+Every publish creates a high-entropy report ID and stores:
 
 ```txt
 data/
   reportdock.sqlite
   reports/<id>/index.html
+  reports/.versions/<id>/<version>/index.html
   reports/<id>/...
   tmp/
 ```
+
+Publishing creates version 1 at `/r/<id>/`. Updating a report replaces the content served at the same public URL after the new bundle has been staged and promoted; the URL remains stable.
 
 The client parses the HTML and bundles local assets referenced by common HTML attributes such as `src`, `srcset`, `poster`, relevant `link[href]`, `object[data]`, and `embed[src]`.
 
@@ -222,4 +236,4 @@ The repository is configured for `github.com/dain98/ReportDock`.
 
 ## V1 Non-Goals
 
-V1 does not support zip uploads, report mutation, named overwrites, private viewer auth, users/teams, search/tags, remote asset fetching, or Postgres/S3 adapters.
+V1 does not support zip uploads, named overwrites, private viewer auth, users/teams, search/tags, remote asset fetching, or Postgres/S3 adapters.

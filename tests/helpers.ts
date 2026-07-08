@@ -79,6 +79,14 @@ export async function postReport(baseUrl: string, token: string, form: FormData)
   });
 }
 
+export async function putReport(baseUrl: string, id: string, token: string, form: FormData): Promise<Response> {
+  return fetch(new URL(`/api/reports/${id}`, baseUrl), {
+    method: "PUT",
+    headers: { Authorization: `Bearer ${token}` },
+    body: form
+  });
+}
+
 export async function readFixture(relativePath: string): Promise<Buffer> {
   return readFile(path.join(process.cwd(), "tests/fixtures/basic-report", relativePath));
 }

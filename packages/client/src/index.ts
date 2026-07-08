@@ -16,9 +16,28 @@ export interface PublishedReport {
   url: string;
   title?: string;
   createdAt: string;
+  updatedAt: string;
+  version: number;
+}
+
+export interface UpdateReportOptions extends PublishReportOptions {
+  id: string;
 }
 
 export async function publishReport(options: PublishReportOptions): Promise<PublishedReport> {
+  return sendReport("POST", "/api/reports", options);
+}
+
+export async function updateReport(options: UpdateReportOptions): Promise<PublishedReport> {
+  const id = validateReportId(options.id);
+  return sendReport("PUT", `/api/reports/${id}`, options);
+}
+
+async function sendReport(
+  method: "POST" | "PUT",
+  endpoint: string,
+  options: PublishReportOptions
+): Promise<PublishedReport> {
   const baseUrl = options.baseUrl ?? process.env.REPORTDOCK_BASE_URL;
   const token = options.token ?? process.env.REPORTDOCK_TOKEN ?? process.env.REPORTDOCK_ADMIN_TOKEN;
 
@@ -60,8 +79,8 @@ export async function publishReport(options: PublishReportOptions): Promise<Publ
     );
   }
 
-  const response = await fetch(new URL("/api/reports", normalizeBaseUrl(baseUrl)), {
-    method: "POST",
+  const response = await fetch(new URL(endpoint, normalizeBaseUrl(baseUrl)), {
+    method,
     headers: {
       Authorization: `Bearer ${token}`
     },
@@ -74,6 +93,14 @@ export async function publishReport(options: PublishReportOptions): Promise<Publ
   }
 
   return (await response.json()) as PublishedReport;
+}
+
+function validateReportId(id: string): string {
+  if (!/^[A-Za-z0-9_-]{20,64}$/.test(id)) {
+    throw new Error("Invalid ReportDock report ID.");
+  }
+
+  return id;
 }
 
 function normalizeBaseUrl(value: string): string {
