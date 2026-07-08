@@ -4,7 +4,7 @@ ReportDock is a self-hosted service for publishing one-page HTML reports from ag
 
 ## Quick Start
 
-Create a `compose.yaml` file:
+Create a `docker-compose.yml` file:
 
 ```yaml
 services:
