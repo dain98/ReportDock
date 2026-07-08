@@ -3,7 +3,7 @@ WORKDIR /app
 COPY package.json package-lock.json* ./
 COPY apps/server/package.json apps/server/package.json
 COPY packages/client/package.json packages/client/package.json
-RUN npm install
+RUN npm ci
 
 FROM node:24-slim AS build
 WORKDIR /app

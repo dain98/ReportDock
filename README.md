@@ -4,6 +4,19 @@ ReportDock is a self-hosted service for publishing one-page HTML reports from ag
 
 ## Quick Start
 
+Using the published Docker image:
+
+```sh
+docker run --rm \
+  -p 3000:3000 \
+  -e REPORTDOCK_BASE_URL=http://localhost:3000 \
+  -e REPORTDOCK_ADMIN_TOKEN=replace-with-a-long-random-token \
+  -v reportdock_data:/data \
+  ghcr.io/dain98/reportdock:latest
+```
+
+From source:
+
 ```sh
 cp .env.example .env
 # Edit REPORTDOCK_ADMIN_TOKEN before exposing the service.
@@ -11,6 +24,26 @@ docker compose up --build
 ```
 
 The server listens on `http://localhost:3000` by default.
+
+## Docker Images
+
+Published images are available at:
+
+```txt
+ghcr.io/dain98/reportdock
+```
+
+Tags:
+
+```txt
+latest       Published from main
+vX.Y.Z       Published from matching release tags
+X.Y.Z        Semver alias for release tags
+X.Y          Major/minor alias for release tags
+sha-<short>  Published for every workflow run
+```
+
+The GitHub Actions workflow builds and pushes multi-architecture images for `linux/amd64` and `linux/arm64`. To publish a release image, push a tag such as `v0.1.0`.
 
 Important environment variables:
 
