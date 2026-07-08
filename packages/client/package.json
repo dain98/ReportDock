@@ -1,0 +1,43 @@
+{
+  "name": "reportdock",
+  "version": "0.1.0",
+  "description": "Publish one-page HTML reports to a self-hosted ReportDock server.",
+  "type": "module",
+  "bin": {
+    "reportdock": "dist/cli.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node ../../scripts/fix-client-bin.js",
+    "dev": "tsx src/cli.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dain98/ReportDock.git",
+    "directory": "packages/client"
+  },
+  "keywords": [
+    "reports",
+    "html",
+    "self-hosted",
+    "agents"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "cheerio": "^1.1.0",
+    "commander": "^14.0.0",
+    "mime-types": "^3.0.1"
+  },
+  "devDependencies": {
+    "@types/mime-types": "^2.1.4"
+  }
+}

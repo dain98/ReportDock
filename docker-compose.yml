@@ -1,0 +1,18 @@
+services:
+  reportdock:
+    build: .
+    image: reportdock:latest
+    ports:
+      - "3000:3000"
+    environment:
+      PORT: "3000"
+      REPORTDOCK_BASE_URL: "${REPORTDOCK_BASE_URL:-http://localhost:3000}"
+      REPORTDOCK_REPORT_BASE_URL: "${REPORTDOCK_REPORT_BASE_URL:-}"
+      REPORTDOCK_ADMIN_TOKEN: "${REPORTDOCK_ADMIN_TOKEN}"
+      REPORTDOCK_DATA_DIR: "/data"
+    volumes:
+      - reportdock_data:/data
+    restart: unless-stopped
+
+volumes:
+  reportdock_data:

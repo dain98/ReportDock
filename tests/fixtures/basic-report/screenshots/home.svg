@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360" viewBox="0 0 640 360">
+  <rect width="640" height="360" fill="#121a26"/>
+  <rect x="32" y="32" width="576" height="296" rx="8" fill="#1d2a3a"/>
+  <text x="64" y="100" font-family="system-ui" font-size="32" fill="#eef4ff">Home</text>
+</svg>
