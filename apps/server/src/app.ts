@@ -330,15 +330,17 @@ function renderLoginPage(error?: string): string {
     "ReportDock Admin",
     `
       <main class="login">
-        <h1>ReportDock</h1>
-        ${error ? `<p class="error">${escapeHtml(error)}</p>` : ""}
-        <form method="post" action="/admin/login">
-          <label>
-            Admin token
-            <input name="token" type="password" autocomplete="current-password" required>
-          </label>
-          <button type="submit">Log in</button>
-        </form>
+        <section class="login-panel">
+          <h1>ReportDock</h1>
+          ${error ? `<p class="error">${escapeHtml(error)}</p>` : ""}
+          <form method="post" action="/admin/login">
+            <label>
+              Admin token
+              <input name="token" type="password" autocomplete="current-password" required>
+            </label>
+            <button type="submit">Log in</button>
+          </form>
+        </section>
       </main>
     `
   );
@@ -407,7 +409,7 @@ function htmlDocument(title: string, body: string): string {
     body { margin: 0; background: #f6f8fa; color: #182230; }
     main { width: min(1120px, calc(100% - 32px)); margin: 32px auto; }
     header { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
-    h1 { margin: 0; font-size: 24px; }
+    h1 { margin: 0; font-size: 24px; line-height: 1.2; }
     table { width: 100%; border-collapse: collapse; background: white; border: 1px solid #d9e2ec; }
     th, td { padding: 10px 12px; border-bottom: 1px solid #e6edf3; text-align: left; vertical-align: middle; }
     th { font-size: 12px; text-transform: uppercase; color: #52606d; background: #f8fafc; }
@@ -415,14 +417,15 @@ function htmlDocument(title: string, body: string): string {
     button { padding: 7px 10px; border: 1px solid #9fb3c8; border-radius: 4px; background: #fff; color: #182230; font: inherit; cursor: pointer; }
     a { color: #0b5cad; }
     code { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-    .login { max-width: 360px; }
-    .login form { display: grid; gap: 12px; padding: 18px; background: white; border: 1px solid #d9e2ec; }
+    .login { max-width: 392px; }
+    .login-panel { display: grid; gap: 18px; padding: 20px; background: white; border: 1px solid #d9e2ec; }
+    .login form { display: grid; gap: 12px; }
     .login label { display: grid; gap: 6px; }
     .error { color: #b42318; }
     .empty { color: #52606d; text-align: center; padding: 28px; }
     @media (prefers-color-scheme: dark) {
       body { background: #0b1018; color: #eef4ff; }
-      table, .login form { background: #121a26; border-color: #263448; }
+      table, .login-panel { background: #121a26; border-color: #263448; }
       th, td { border-color: #263448; }
       th { color: #a7b3c5; background: #162131; }
       input, button { background: #0b1018; color: #eef4ff; border-color: #364a63; }

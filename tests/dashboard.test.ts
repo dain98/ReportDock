@@ -26,6 +26,22 @@ describe("admin dashboard authentication", () => {
     expect(await response.text()).toContain("Admin token");
   });
 
+  it("renders the login heading and form inside one panel", async () => {
+    server = await startTestServer();
+    const response = await fetch(new URL("/admin", server.baseUrl));
+    const body = await response.text();
+
+    const panelStart = body.indexOf('<section class="login-panel">');
+    const headingIndex = body.indexOf("<h1>ReportDock</h1>", panelStart);
+    const formIndex = body.indexOf('<form method="post" action="/admin/login">', panelStart);
+    const panelEnd = body.indexOf("</section>", panelStart);
+
+    expect(panelStart).toBeGreaterThan(-1);
+    expect(headingIndex).toBeGreaterThan(panelStart);
+    expect(formIndex).toBeGreaterThan(headingIndex);
+    expect(panelEnd).toBeGreaterThan(formIndex);
+  });
+
   it("does not reveal the expected token on failed login", async () => {
     server = await startTestServer();
     const response = await fetch(new URL("/admin/login", server.baseUrl), {

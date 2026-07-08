@@ -9,7 +9,7 @@ Create a `docker-compose.yml` file:
 ```yaml
 services:
   reportdock:
-    image: ghcr.io/dain98/reportdock:v0.1.2
+    image: ghcr.io/dain98/reportdock:v0.1.3
     ports:
       - "3000:3000"
     environment:
@@ -58,7 +58,7 @@ X.Y          Major/minor alias for release tags
 sha-<short>  Published for every workflow run
 ```
 
-The GitHub Actions workflow builds and pushes multi-architecture images for `linux/amd64` and `linux/arm64`. To publish a release image, push a tag such as `v0.1.2`.
+The GitHub Actions workflow builds and pushes multi-architecture images for `linux/amd64` and `linux/arm64`. To publish a release image, push a tag such as `v0.1.3`.
 
 Important environment variables:
 
@@ -133,7 +133,7 @@ reportdock
 
 Release publishing is handled by `.github/workflows/npm.yml` when a `v*` tag is pushed. Before the first publish, create an npm automation token, or a granular npm access token with 2FA bypass enabled, and add it to the GitHub repository as `NPM_TOKEN`.
 
-The workflow checks that the Git tag matches `packages/client/package.json`. For example, package version `0.1.2` must be released with tag `v0.1.2`.
+The workflow checks that the Git tag matches `packages/client/package.json`. For example, package version `0.1.3` must be released with tag `v0.1.3`.
 
 ## Upload Model
 
