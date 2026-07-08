@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "description": "Publish one-page HTML reports to a self-hosted ReportDock server.",
   "type": "module",
+  "homepage": "https://github.com/dain98/ReportDock#readme",
+  "bugs": {
+    "url": "https://github.com/dain98/ReportDock/issues"
+  },
   "bin": {
     "reportdock": "dist/cli.js"
   },
@@ -24,6 +28,12 @@
     "type": "git",
     "url": "git+https://github.com/dain98/ReportDock.git",
     "directory": "packages/client"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "keywords": [
     "reports",

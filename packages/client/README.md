@@ -3,6 +3,7 @@
 CLI and JS client for publishing one-page HTML reports to a self-hosted ReportDock server.
 
 ```sh
+npm install -g reportdock
 reportdock publish ./report.html --base-url https://reportdock.example.com --token "$REPORTDOCK_TOKEN"
 ```
 

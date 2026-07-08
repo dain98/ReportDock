@@ -105,6 +105,18 @@ const report = await publishReport({
 console.log(report.url);
 ```
 
+## npm Package
+
+The CLI/client package is published as:
+
+```txt
+reportdock
+```
+
+Release publishing is handled by `.github/workflows/npm.yml` when a `v*` tag is pushed. Before the first publish, create an npm automation token with publish access and add it to the GitHub repository as `NPM_TOKEN`.
+
+The workflow checks that the Git tag matches `packages/client/package.json`. For example, package version `0.1.0` must be released with tag `v0.1.0`.
+
 ## Upload Model
 
 Every publish creates a high-entropy immutable report ID and stores:
