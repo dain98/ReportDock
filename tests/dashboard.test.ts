@@ -39,7 +39,39 @@ describe("admin dashboard authentication", () => {
     expect(body).not.toContain(TEST_TOKEN);
   });
 
-  it("sets HttpOnly, SameSite, and Secure cookie attributes in production mode", async () => {
+  it("omits Secure from auto cookies when the configured base URL is HTTP", async () => {
+    server = await startTestServer();
+    const response = await fetch(new URL("/admin/login", server.baseUrl), {
+      method: "POST",
+      redirect: "manual",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ token: TEST_TOKEN })
+    });
+
+    const cookie = response.headers.get("set-cookie") ?? "";
+    expect(response.status).toBe(303);
+    expect(cookie).toContain("HttpOnly");
+    expect(cookie).toContain("SameSite=Strict");
+    expect(cookie).not.toMatch(/;\s*Secure(?:;|$)/);
+  });
+
+  it("sets Secure on auto cookies when the configured base URL is HTTPS", async () => {
+    server = await startTestServer({ baseUrl: "https://reportdock.example.com" });
+    const response = await fetch(new URL("/admin/login", server.baseUrl), {
+      method: "POST",
+      redirect: "manual",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ token: TEST_TOKEN })
+    });
+
+    const cookie = response.headers.get("set-cookie") ?? "";
+    expect(response.status).toBe(303);
+    expect(cookie).toContain("HttpOnly");
+    expect(cookie).toContain("SameSite=Strict");
+    expect(cookie).toContain("Secure");
+  });
+
+  it("honors explicit Secure cookie override", async () => {
     server = await startTestServer({ secureCookies: true });
     const response = await fetch(new URL("/admin/login", server.baseUrl), {
       method: "POST",
@@ -53,5 +85,22 @@ describe("admin dashboard authentication", () => {
     expect(cookie).toContain("HttpOnly");
     expect(cookie).toContain("SameSite=Strict");
     expect(cookie).toContain("Secure");
+  });
+
+  it("honors explicit non-Secure cookie override", async () => {
+    server = await startTestServer({
+      baseUrl: "https://reportdock.example.com",
+      secureCookies: false
+    });
+    const response = await fetch(new URL("/admin/login", server.baseUrl), {
+      method: "POST",
+      redirect: "manual",
+      headers: { "content-type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ token: TEST_TOKEN })
+    });
+
+    const cookie = response.headers.get("set-cookie") ?? "";
+    expect(response.status).toBe(303);
+    expect(cookie).not.toMatch(/;\s*Secure(?:;|$)/);
   });
 });

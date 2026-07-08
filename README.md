@@ -9,12 +9,13 @@ Create a `docker-compose.yml` file:
 ```yaml
 services:
   reportdock:
-    image: ghcr.io/dain98/reportdock:v0.1.1
+    image: ghcr.io/dain98/reportdock:v0.1.2
     ports:
       - "3000:3000"
     environment:
       REPORTDOCK_BASE_URL: "http://localhost:3000"
       REPORTDOCK_REPORT_BASE_URL: ""
+      REPORTDOCK_SECURE_COOKIES: "auto"
       REPORTDOCK_ADMIN_TOKEN: "${REPORTDOCK_ADMIN_TOKEN}"
       REPORTDOCK_DATA_DIR: "/data"
     volumes:
@@ -57,13 +58,14 @@ X.Y          Major/minor alias for release tags
 sha-<short>  Published for every workflow run
 ```
 
-The GitHub Actions workflow builds and pushes multi-architecture images for `linux/amd64` and `linux/arm64`. To publish a release image, push a tag such as `v0.1.1`.
+The GitHub Actions workflow builds and pushes multi-architecture images for `linux/amd64` and `linux/arm64`. To publish a release image, push a tag such as `v0.1.2`.
 
 Important environment variables:
 
 ```txt
 REPORTDOCK_BASE_URL=http://localhost:3000
 REPORTDOCK_REPORT_BASE_URL=
+REPORTDOCK_SECURE_COOKIES=auto
 REPORTDOCK_ADMIN_TOKEN=replace-with-a-long-random-token
 REPORTDOCK_DATA_DIR=/data
 PORT=3000
@@ -75,6 +77,8 @@ REPORTDOCK_MAX_HTML_BYTES=10485760
 ```
 
 `REPORTDOCK_REPORT_BASE_URL` is optional. Set it when public reports are served from a separate origin, such as `https://reports.example.com`, while admin/API traffic remains on `REPORTDOCK_BASE_URL`.
+
+`REPORTDOCK_SECURE_COOKIES=auto` sets Secure dashboard cookies only when `REPORTDOCK_BASE_URL` starts with `https://`. Use `true` to always require HTTPS cookies or `false` for plain HTTP-only deployments.
 
 ## Publishing Reports
 
@@ -129,7 +133,7 @@ reportdock
 
 Release publishing is handled by `.github/workflows/npm.yml` when a `v*` tag is pushed. Before the first publish, create an npm automation token, or a granular npm access token with 2FA bypass enabled, and add it to the GitHub repository as `NPM_TOKEN`.
 
-The workflow checks that the Git tag matches `packages/client/package.json`. For example, package version `0.1.1` must be released with tag `v0.1.1`.
+The workflow checks that the Git tag matches `packages/client/package.json`. For example, package version `0.1.2` must be released with tag `v0.1.2`.
 
 ## Upload Model
 

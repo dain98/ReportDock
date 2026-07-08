@@ -41,6 +41,9 @@ export function loadConfig(overrides: ConfigOverrides = {}): ReportDockConfig {
 
   const baseUrl = overrides.baseUrl ?? process.env.REPORTDOCK_BASE_URL ?? "http://localhost:3000";
   const reportBaseUrl = overrides.reportBaseUrl ?? emptyToUndefined(process.env.REPORTDOCK_REPORT_BASE_URL);
+  const secureCookies =
+    overrides.secureCookies ??
+    parseSecureCookies(process.env.REPORTDOCK_SECURE_COOKIES ?? "auto", baseUrl);
 
   return {
     baseUrl,
@@ -51,7 +54,7 @@ export function loadConfig(overrides: ConfigOverrides = {}): ReportDockConfig {
     tmpDir: path.join(dataDir, "tmp"),
     databasePath: path.join(dataDir, "reportdock.sqlite"),
     port: overrides.port ?? parseIntegerEnv("PORT", 3000),
-    secureCookies: overrides.secureCookies ?? process.env.NODE_ENV === "production",
+    secureCookies,
     maxUploadBytes: overrides.maxUploadBytes ?? parseIntegerEnv("REPORTDOCK_MAX_UPLOAD_BYTES", 104857600),
     maxReportBytes: overrides.maxReportBytes ?? parseIntegerEnv("REPORTDOCK_MAX_REPORT_BYTES", 104857600),
     maxAssetCount: overrides.maxAssetCount ?? parseIntegerEnv("REPORTDOCK_MAX_ASSET_COUNT", 1000),
@@ -76,4 +79,22 @@ function parseIntegerEnv(name: string, defaultValue: number): number {
 
 function emptyToUndefined(value: string | undefined): string | undefined {
   return value && value.trim() ? value : undefined;
+}
+
+function parseSecureCookies(value: string, baseUrl: string): boolean {
+  const normalized = value.trim().toLowerCase();
+
+  if (normalized === "auto" || normalized === "") {
+    return baseUrl.trim().toLowerCase().startsWith("https://");
+  }
+
+  if (normalized === "true") {
+    return true;
+  }
+
+  if (normalized === "false") {
+    return false;
+  }
+
+  throw new Error("REPORTDOCK_SECURE_COOKIES must be auto, true, or false.");
 }

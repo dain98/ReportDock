@@ -17,7 +17,7 @@ const program = new Command();
 program
   .name("reportdock")
   .description("Publish one-page HTML reports to a self-hosted ReportDock server.")
-  .version("0.1.1");
+  .version("0.1.2");
 
 program
   .command("publish")
