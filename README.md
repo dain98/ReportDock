@@ -4,23 +4,37 @@ ReportDock is a self-hosted service for publishing one-page HTML reports from ag
 
 ## Quick Start
 
-Using the published Docker image:
+Create a `compose.yaml` file:
 
-```sh
-docker run --rm \
-  -p 3000:3000 \
-  -e REPORTDOCK_BASE_URL=http://localhost:3000 \
-  -e REPORTDOCK_ADMIN_TOKEN=replace-with-a-long-random-token \
-  -v reportdock_data:/data \
-  ghcr.io/dain98/reportdock:latest
+```yaml
+services:
+  reportdock:
+    image: ghcr.io/dain98/reportdock:latest
+    ports:
+      - "3000:3000"
+    environment:
+      REPORTDOCK_BASE_URL: "http://localhost:3000"
+      REPORTDOCK_REPORT_BASE_URL: ""
+      REPORTDOCK_ADMIN_TOKEN: "${REPORTDOCK_ADMIN_TOKEN}"
+      REPORTDOCK_DATA_DIR: "/data"
+    volumes:
+      - reportdock_data:/data
+    restart: unless-stopped
+
+volumes:
+  reportdock_data:
 ```
 
-From source:
+Create an `.env` file beside it:
+
+```txt
+REPORTDOCK_ADMIN_TOKEN=replace-with-a-long-random-token
+```
+
+Start ReportDock:
 
 ```sh
-cp .env.example .env
-# Edit REPORTDOCK_ADMIN_TOKEN before exposing the service.
-docker compose up --build
+docker compose up -d
 ```
 
 The server listens on `http://localhost:3000` by default.
