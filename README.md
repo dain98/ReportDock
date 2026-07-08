@@ -9,7 +9,7 @@ Create a `docker-compose.yml` file:
 ```yaml
 services:
   reportdock:
-    image: ghcr.io/dain98/reportdock:latest
+    image: ghcr.io/dain98/reportdock:v0.1.0
     ports:
       - "3000:3000"
     environment:
