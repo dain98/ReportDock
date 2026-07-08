@@ -56,6 +56,12 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
     return { ok: true };
   });
 
+  app.get("/", async (_request, reply) => {
+    setNoStore(reply);
+    reply.redirect("/admin", 302);
+    return reply;
+  });
+
   registerApiRoutes(app, config, db);
   registerPublicReportRoutes(app, config, db);
   registerAdminRoutes(app, config, db);

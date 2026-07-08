@@ -1,6 +1,6 @@
 {
   "name": "reportdock",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Publish one-page HTML reports to a self-hosted ReportDock server.",
   "type": "module",
   "homepage": "https://github.com/dain98/ReportDock#readme",

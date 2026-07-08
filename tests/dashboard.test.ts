@@ -9,6 +9,15 @@ afterEach(async () => {
 });
 
 describe("admin dashboard authentication", () => {
+  it("redirects the root URL to the dashboard", async () => {
+    server = await startTestServer();
+    const response = await fetch(new URL("/", server.baseUrl), { redirect: "manual" });
+
+    expect(response.status).toBe(302);
+    expect(response.headers.get("location")).toBe("/admin");
+    expect(response.headers.get("cache-control")).toBe("no-store");
+  });
+
   it("does not accept tokens in URLs", async () => {
     server = await startTestServer();
     const response = await fetch(new URL(`/admin?token=${encodeURIComponent(TEST_TOKEN)}`, server.baseUrl));
